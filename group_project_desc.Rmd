@@ -10,12 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Lending Club Loans
 
-Problem Statement:
+<B>Problem Statement:</B>
 
 The project aims to segment Lending Club's customers base so that P2P investors are better able to understand their expected returns given their lenders characetrisitics. For that purpose we will use two variables: PD (Probability of Default) and LGD (Loss Given Default). We will then have a model that allows us to estimate expected returns for each investment.
 
 
-Process:
+<B>Process:</B>
 
 1) Define Business Problem
 - Produce a precise definition of the target variable: the specific quantity that will be the focus of the data mining
