@@ -8,8 +8,25 @@ author: "Chaya Maheshwari, Pedro Henriques, Jada Neumann, Stanislaw Ostoja-Starz
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Traffic Data Analysis to Predict Housing Prices Impact
+## Lending Club Loans
 
-Example: The project aims to use historical city traffic and housing prices data to predict the evolution of housing prices in different areas of the city.
+Problem Statement:
+
+The project aims to segment Lending Club's customers based on their likelihood to default.
 
 
+Process:
+
+1) Define Business Problem
+- Produce a precise definition of the target variable: the specific quantity that will be the focus of the data mining
+
+2) Collect Data
+- Separate loans finished from loans ongoing
+
+3) Clean Up Data
+- Eliminate out of scope data
+- Create dummies for non-numeric values
+
+4) Decide on the type of model to use (e.g. classification tree or logistic regression)
+
+5) Choose method to avoid overfitting
