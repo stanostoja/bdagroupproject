@@ -12,21 +12,32 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Problem Statement:
 
-The project aims to segment Lending Club's customers based on their likelihood to default.
+The project aims to segment Lending Club's customers base so that P2P investors are better able to understand their expected returns given their lenders characetrisitics. For that purpose we will use two variables: PD (Probability of Default) and LGD (Loss Given Default). We will then have a model that allows us to estimate expected returns for each investment.
 
 
 Process:
 
 1) Define Business Problem
 - Produce a precise definition of the target variable: the specific quantity that will be the focus of the data mining
+- PD: Probability of Default - probability of a lender not servicing his debt on time
+- LGD: Loss Given Default - percentage of total return that is loss on average in the event of default
 
 2) Collect Data
-- Separate loans finished from loans ongoing
+- Download data from lendingclub.com or kaggle.com
+- Separate data entries (lenders) : loans finished from loans ongoing. 
+- Step 1: develop a model using loans finished entries
+- Step 2: (if time allows) integrate information from ongoing loans data entries to improve the model
 
 3) Clean Up Data
-- Eliminate out of scope data
+- Eliminate variables that are out of scope or are too lengthy to parse/process for the benefit of analysis 
 - Create dummies for non-numeric values
+- Factor the variables
 
 4) Decide on the type of model to use (e.g. classification tree or logistic regression)
 
 5) Choose method to avoid overfitting
+
+6) Build and test the model
+- use 90% of the retained data entries to build the model
+- use remaining 10% of data entries to test the model. Define the threshold values for test success.
+
