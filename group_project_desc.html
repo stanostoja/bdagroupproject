@@ -124,32 +124,43 @@ $(document).ready(function () {
 
 <div id="lending-club-loans" class="section level2">
 <h2>Lending Club Loans</h2>
-<p>Problem Statement:</p>
-<p>The project aims to segment Lending Club’s customers based on their likelihood to default.</p>
-<p>Process:</p>
+<p><B>Problem Statement:</B></p>
+<p>The project aims to segment Lending Club’s customers base so that P2P investors are better able to understand their expected returns given their lenders characetrisitics. For that purpose we will use two variables: PD (Probability of Default) and LGD (Loss Given Default). We will then have a model that allows us to estimate expected returns for each investment.</p>
+<p><B>Process:</B></p>
 <ol style="list-style-type: decimal">
 <li>Define Business Problem</li>
 </ol>
 <ul>
 <li>Produce a precise definition of the target variable: the specific quantity that will be the focus of the data mining</li>
+<li>PD: Probability of Default - probability of a lender not servicing his debt on time</li>
+<li>LGD: Loss Given Default - percentage of total return that is loss on average in the event of default</li>
 </ul>
 <ol start="2" style="list-style-type: decimal">
 <li>Collect Data</li>
 </ol>
 <ul>
-<li>Separate loans finished from loans ongoing</li>
+<li>Download data from lendingclub.com or kaggle.com</li>
+<li>Separate data entries (lenders) : loans finished from loans ongoing.</li>
+<li>Step 1: develop a model using loans finished entries</li>
+<li>Step 2: (if time allows) integrate information from ongoing loans data entries to improve the model</li>
 </ul>
 <ol start="3" style="list-style-type: decimal">
 <li>Clean Up Data</li>
 </ol>
 <ul>
-<li>Eliminate out of scope data</li>
+<li>Eliminate variables that are out of scope or are too lengthy to parse/process for the benefit of analysis</li>
 <li>Create dummies for non-numeric values</li>
+<li>Factor the variables</li>
 </ul>
 <ol start="4" style="list-style-type: decimal">
 <li><p>Decide on the type of model to use (e.g. classification tree or logistic regression)</p></li>
 <li><p>Choose method to avoid overfitting</p></li>
+<li>Build and test the model</li>
 </ol>
+<ul>
+<li>use 90% of the retained data entries to build the model</li>
+<li>use remaining 10% of data entries to test the model. Define the threshold values for test success.</li>
+</ul>
 </div>
 
 
