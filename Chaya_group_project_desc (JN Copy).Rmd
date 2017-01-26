@@ -1,0 +1,216 @@
+---
+title: "Lending Club Loans"
+output: html_document
+author: "Chaya Maheshwari, Pedro Henriques, Jada Neumann, Stanislaw Ostoja-Starzewski"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Problem Statement:
+
+The project aims to segment Lending Club's customers base so that P2P investors are better able to understand their expected returns given their lenders characetrisitics. For that purpose we will use two variables: PD (Probability of Default) and LGD (Loss Given Default). We will then have a model that allows us to estimate expected returns for each investment.
+
+
+##Process:
+
+### 1) Define Business Problem
+Lending Club allows people with weak financial knowledge to invest in what can be highly risky assets. Our goal is to provide potential investors with inteligence that allows them to make better investment decisions. For that purpose we analize 500k entries of past data past investment data to build a predictive model. Our key risk parameter will be the Probability of Default (PD), i.e. the probability of a lender not servicing his debt on time
+
+### 2) Collect and Clean Up Data
+
+Before beginning the analysis of the data, ensure that the raw data is complete and organized in a way that is conducive to the analysis.  The actions to be taken are as follows:
+
+- Download data as a .csv file from lendingclub.com or kaggle.com
+- Load the data and make a working copy (so that none of the raw data was lost in case we wanted to recover it later)
+
+
+```{r setupdata1E, echo=TRUE, tidy=TRUE}
+# Please ENTER the name of the file with the data used. The file should be a .csv with one row per observation (e.g. person) and one column per attribute. Do not add .csv at the end, make sure the data are numeric.
+datafile_name = "../bdagroupproject/Data/loancopy.csv"
+
+# Please enter the minimum number below which you would like not to print - this makes the readability of the tables easier. Default values are either 10e6 (to print everything) or 0.5. Try both to see the difference.
+MIN_VALUE = 0.5
+
+# Please enter the maximum number of observations to show in the report and slides. 
+# DEFAULT is 10. If the number is large the report may be slow.
+max_data_report = 10
+```
+
+```{r}
+ProjectData <- read.csv(datafile_name)
+ProjectData <- data.matrix(ProjectData) 
+ProjectData_INITIAL <- ProjectData
+```
+
+- Test unique identifier for each entry/loan by seeing if there are any double entries under the “id” and “member_id” columns
+- Eliminate variables that are out of scope or are too lengthy to parse/process for the benefit of analysis:
+    + Remove active loans (i.e. loans that haven’t had the opportunity to default or not because they are still ongoing) and loans with a blank status
+    + Remove columns deemed unnecessary to analyze as they wouldn’t provide useful information (e.g. “url”: URL for the Lending Club page with listing data)
+    +	Remove columns that are too difficult to standardize (e.g. “desc”: loan description provided by the borrower; or “emp_title”: employee title)
+    +	Remove columns that represent similar information to other columns (e.g. “desc” is largely covered by the more standardized “purpose” field)
+    +	Remove columns containing information that would only be obtained AFTER somebody became a client (i.e. couldn’t be used to make the initial lending decision) (e.g. “tot_coll_amt”: total collection amounts ever owed; or “last_pymnt_d”: last month payment was received)
+- Exclude entries with missing information
+    + Remove columns where there is mostly missing information, even if that column would have otherwise been informative
+    + Remove rows where there is any missing information
+- Combine non-numeric descriptions when appropriate, for example:
+    + The Charge-Off and Default classifications could be combined into one Default category under the “loan_status” field because default occurs before charge-off (after 121 days vs. 150 days)
+    + The “purpose” column had a number of non-numeric values such as “debt consolidation” or “home improvement”; however, over 80% of entries were debt-related, so it seemed reasonable to split the data into just two categories: debt-related and other
+- Correct errors
+    + The “issue_d” column had the dates formatted backwards, so, for example, January 2014 was showing as January 14, 2017; reformat to make the correction (note that due to lack of better information, assumptions can be made such as all issue dates occur on the first of the month)
+
+
+### 3) Ensure Data Is Metric
+
+In order to begin analysing the data (generating descriptive statistics, etc.), data must be metric (i.e. numbers, and specifically numbers that have meaningful hierarchical values).
+
+- Remove text from otherwise numeric fields.  For example:
+    + The “term” column had values of “36 months” or “60 months”; change to simply “36” or “60”, respectively
+    + The “emp_length” column had values of “[x] years”; change to simply “[x]”
+    + The “emp_length” column also had values of “<1”, “n/a” and “10+”; change to “0”, “0” and “10”, respectively
+- Create dummy variables for non-numeric values.  For example:
+    + Add a separate column “emp_length_known” to separate which customers have “n/a” values for “emp_length” (indicated by a 0 here)
+    + The “home_ownership” column had values of “Own”, “Mortgage” or “Rent”; separate into three columns: “home_renter”, “home_mortgager” and “home_owner”; a “1” in these columns indicates membership in that category
+    + The “loan_status” column had values of “Fully Paid” or “Default”; change to “1” to indicate fully paid and “0” to indicate default
+- Convert non-numeric but hierarchical data into numbers, for example:
+    + The “grade” column had ratings of A to G; change to ratings of 1 to 7
+    + The “sub_grade” column had ratings of A1 – G5; change to 1.0 to 7.8 (each increment adds 0.2, so that, for example, B2 becomes 2.2 or D4 becomes 4.6)
+- Convert physical addresses into a format in which distances can be measured
+    + Two columns, “zip_code” and “addr_state”, provided information about customer addresses; however, “zip_code” was in the form “###xx”, showing only the first three numbers of a zipcode; therefore, it was not metric and this field was excluded
+    + In order to make “addr_state” metric, the mid-point latitude and longitude of each state was added as two new columns: “addr_lat” and “addr_lon”, respectively; the original "addr_state" field was then deleted 
+
+
+### 4) Scale the Data
+
+<>
+
+
+### 5) Dimentionality Reduction
+
+- Step 1: analysing correlations and identifying variables which are linear combinations of one another
+
+```{r setupfactor, echo=TRUE, tidy=TRUE}
+# Please ENTER then original raw attributes to use. 
+# Please use numbers, not column names, e.g. c(1:5, 7, 8) uses columns 1,2,3,4,5,7,8
+factor_attributes_used = c(3:23)
+
+# Please ENTER the selection criterions for the factors to use. 
+# Choices: "eigenvalue", "variance", "manual"
+factor_selectionciterion = "eigenvalue"
+
+# Please ENTER the desired minumum variance explained 
+# (Only used in case "variance" is the factor selection criterion used). 
+minimum_variance_explained = 65  # between 1 and 100
+
+# Please ENTER the number of factors to use 
+# (Only used in case "manual" is the factor selection criterion used).
+manual_numb_factors_used = 15
+
+# Please ENTER the rotation eventually used (e.g. "none", "varimax", "quatimax", "promax", "oblimin", "simplimax", and "cluster" - see help(principal)). Default is "varimax"
+rotation_used = "varimax"
+
+```
+
+```{r setupfactor2, echo=FALSE, tidy=TRUE}
+
+factor_attributes_used <- intersect(factor_attributes_used, 1:ncol(ProjectData))
+ProjectDataFactor <- ProjectData[,factor_attributes_used]
+ProjectDataFactor <- ProjectData <- data.matrix(ProjectDataFactor)
+```
+
+## Check Correlations
+
+Analysing correlations and identifying variables which are linear combinations of one another. This is the correlation matrix of all the different attributes/variables for the unique customers we have. 
+
+
+```{r}
+thecor = round(cor(ProjectDataFactor),2)
+iprint.df(round(thecor,2), scale=TRUE)
+```
+
+## Choose number of factors
+
+Clearly the different column variables have several correlations between them, so we may be able to actually "group" these variables into only a few "key factors". This not only will simplify the data, but will also greatly facilitate our understanding of the lenders club members.
+
+```{r}
+# Here is how the `principal` function is used 
+UnRotated_Results<-principal(ProjectDataFactor, nfactors=ncol(ProjectDataFactor), rotate="none",score=TRUE)
+UnRotated_Factors<-round(UnRotated_Results$loadings,2)
+UnRotated_Factors<-as.data.frame(unclass(UnRotated_Factors))
+colnames(UnRotated_Factors)<-paste("Comp",1:ncol(UnRotated_Factors),sep="")
+```
+
+```{r}
+# Here is how we use the `PCA` function 
+Variance_Explained_Table_results<-PCA(ProjectDataFactor, graph=FALSE)
+Variance_Explained_Table<-Variance_Explained_Table_results$eig
+Variance_Explained_Table_copy<-Variance_Explained_Table
+
+rownames(Variance_Explained_Table) <- paste("Component", 1:nrow(Variance_Explained_Table), sep=" ")
+colnames(Variance_Explained_Table) <- c("Eigenvalue", "Pct of explained variance", "Cumulative pct of explained variance")
+```
+
+Let's look at the **variance explained** as well as the **eigenvalues**
+
+```{r}
+iprint.df(round(Variance_Explained_Table, 2))
+```
+
+```{r}
+eigenvalues  <- Variance_Explained_Table[, "Eigenvalue"]
+df           <- cbind(as.data.frame(eigenvalues), c(1:length(eigenvalues)), rep(1, length(eigenvalues)))
+colnames(df) <- c("eigenvalues", "components", "abline")
+iplot.df(melt(df, id="components"))
+```
+
+## Interpret the factors
+
+This is how the "top factors" look like. 
+
+```{r}
+if (factor_selectionciterion == "eigenvalue")
+  factors_selected = sum(Variance_Explained_Table_copy[,1] >= 1)
+if (factor_selectionciterion == "variance")
+  factors_selected = 1:head(which(Variance_Explained_Table_copy[,"cumulative percentage of variance"]>= minimum_variance_explained),1)
+if (factor_selectionciterion == "manual")
+  factors_selected = manual_numb_factors_used
+```
+To better visualize them, we will use what is called a "rotation". There are many rotations methods. In this case we selected the `r rotation_used` rotation. For our data, the `r factors_selected` selected factors look as follows after this rotation: 
+
+```{r}
+Rotated_Results<-principal(ProjectDataFactor, nfactors=max(factors_selected), rotate=rotation_used,score=TRUE)
+Rotated_Factors<-round(Rotated_Results$loadings,2)
+Rotated_Factors<-as.data.frame(unclass(Rotated_Factors))
+colnames(Rotated_Factors)<-paste("Comp.",1:ncol(Rotated_Factors),sep="")
+
+sorted_rows <- sort(Rotated_Factors[,1], decreasing = TRUE, index.return = TRUE)$ix
+Rotated_Factors <- Rotated_Factors[sorted_rows,]
+
+iprint.df(Rotated_Factors, scale=TRUE)
+```
+
+To better visualize and interpret the factors we often "suppress" loadings with small values, e.g. with absolute values smaller than 0.5. In this case our factors look as follows after suppressing the small numbers:
+
+```{r}
+Rotated_Factors_thres <- Rotated_Factors
+Rotated_Factors_thres[abs(Rotated_Factors_thres) < MIN_VALUE]<-NA
+colnames(Rotated_Factors_thres)<- colnames(Rotated_Factors)
+rownames(Rotated_Factors_thres)<- rownames(Rotated_Factors)
+
+iprint.df(Rotated_Factors_thres, scale=TRUE)
+```
+
+- Step 2: visualization (?)
+- Step 3: create factors and decide which ones to keep based on a eigenvalue analysis
+- Step 4: interpret the factors
+- (...)
+
+### 6) Clustering
+
+### 7) Choose method to avoid overfitting
+
+### 8) Build and test the model
+- use 90% of the retained data entries to build the model
+- use remaining 10% of data entries to test the model. Define the threshold values for test success.
+
