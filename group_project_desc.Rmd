@@ -18,23 +18,22 @@ The project aims to segment Lending Club's customers base so that P2P investors 
 <B>Process:</B>
 
 1) Define Business Problem
-- Lending Club allows people with weak financial knowledge to invest in what can be highly risky assets. Our goal is to provide potential investors with inteligence that allows them to make better investment decisions. For that purpose we analize 500k entries of past data past investment data to build a predictive model. Our key risk parameter will be the Probability of Default (PD), i.e. the probability of a lender not servicing his debt on time
+- Produce a precise definition of the target variable: the specific quantity that will be the focus of the data mining
+- PD: Probability of Default - probability of a lender not servicing his debt on time
+- LGD: Loss Given Default - percentage of total return that is loss on average in the event of default
 
-2) Collect and clean up Data
-- Step 1: download data from lendingclub.com or kaggle.com
-- Step 2: test unique identifier for each entry/loan
-- Step 3: eliminate variables that are out of scope or are too lengthy to parse/process for the benefit of analysis 
-- Step 4: create dummy variables for non-numeric values
-(...)
+2) Collect Data
+- Download data from lendingclub.com or kaggle.com
+- Separate data entries (lenders) : loans finished from loans ongoing. 
+- Step 1: develop a model using loans finished entries
+- Step 2: (if time allows) integrate information from ongoing loans data entries to improve the model
 
-3) Dimentionality Reduction
-- Step 1: analysing correlations and identifying variables which are linear combinations of one another
-- Step 2: visualization (?)
-- Step 3: create factors and decide which ones to keep based on a eigenvalue analysis
-- Step 4: interpret the factors
-- (...)
+3) Clean Up Data
+- Eliminate variables that are out of scope or are too lengthy to parse/process for the benefit of analysis 
+- Create dummies for non-numeric values
+- Factor the variables
 
-4) Clustering
+4) Decide on the type of model to use (e.g. classification tree or logistic regression)
 
 5) Choose method to avoid overfitting
 

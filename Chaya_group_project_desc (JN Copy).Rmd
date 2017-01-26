@@ -25,6 +25,7 @@ Before beginning the analysis of the data, ensure that the raw data is complete 
 - Download data as a .csv file from lendingclub.com or kaggle.com
 - Load the data and make a working copy (so that none of the raw data was lost in case we wanted to recover it later)
 
+
 ```{r setupdata1E, echo=TRUE, tidy=TRUE}
 # Please ENTER the name of the file with the data used. The file should be a .csv with one row per observation (e.g. person) and one column per attribute. Do not add .csv at the end, make sure the data are numeric.
 datafile_name = "../bdagroupproject/Data/loancopy.csv"
@@ -41,7 +42,6 @@ max_data_report = 10
 ProjectData <- read.csv(datafile_name)
 ProjectData <- data.matrix(ProjectData) 
 ProjectData_INITIAL <- ProjectData
-
 ```
 
 - Test unique identifier for each entry/loan by seeing if there are any double entries under the “id” and “member_id” columns
@@ -87,7 +87,120 @@ In order to begin analysing the data (generating descriptive statistics, etc.), 
 
 
 ### 5) Dimentionality Reduction
+
 - Step 1: analysing correlations and identifying variables which are linear combinations of one another
+
+```{r setupfactor, echo=TRUE, tidy=TRUE}
+# Please ENTER then original raw attributes to use. 
+# Please use numbers, not column names, e.g. c(1:5, 7, 8) uses columns 1,2,3,4,5,7,8
+factor_attributes_used = c(3:23)
+
+# Please ENTER the selection criterions for the factors to use. 
+# Choices: "eigenvalue", "variance", "manual"
+factor_selectionciterion = "eigenvalue"
+
+# Please ENTER the desired minumum variance explained 
+# (Only used in case "variance" is the factor selection criterion used). 
+minimum_variance_explained = 65  # between 1 and 100
+
+# Please ENTER the number of factors to use 
+# (Only used in case "manual" is the factor selection criterion used).
+manual_numb_factors_used = 15
+
+# Please ENTER the rotation eventually used (e.g. "none", "varimax", "quatimax", "promax", "oblimin", "simplimax", and "cluster" - see help(principal)). Default is "varimax"
+rotation_used = "varimax"
+
+```
+
+```{r setupfactor2, echo=FALSE, tidy=TRUE}
+
+factor_attributes_used <- intersect(factor_attributes_used, 1:ncol(ProjectData))
+ProjectDataFactor <- ProjectData[,factor_attributes_used]
+ProjectDataFactor <- ProjectData <- data.matrix(ProjectDataFactor)
+```
+
+## Check Correlations
+
+Analysing correlations and identifying variables which are linear combinations of one another. This is the correlation matrix of all the different attributes/variables for the unique customers we have. 
+
+
+```{r}
+thecor = round(cor(ProjectDataFactor),2)
+iprint.df(round(thecor,2), scale=TRUE)
+```
+
+## Choose number of factors
+
+Clearly the different column variables have several correlations between them, so we may be able to actually "group" these variables into only a few "key factors". This not only will simplify the data, but will also greatly facilitate our understanding of the lenders club members.
+
+```{r}
+# Here is how the `principal` function is used 
+UnRotated_Results<-principal(ProjectDataFactor, nfactors=ncol(ProjectDataFactor), rotate="none",score=TRUE)
+UnRotated_Factors<-round(UnRotated_Results$loadings,2)
+UnRotated_Factors<-as.data.frame(unclass(UnRotated_Factors))
+colnames(UnRotated_Factors)<-paste("Comp",1:ncol(UnRotated_Factors),sep="")
+```
+
+```{r}
+# Here is how we use the `PCA` function 
+Variance_Explained_Table_results<-PCA(ProjectDataFactor, graph=FALSE)
+Variance_Explained_Table<-Variance_Explained_Table_results$eig
+Variance_Explained_Table_copy<-Variance_Explained_Table
+
+rownames(Variance_Explained_Table) <- paste("Component", 1:nrow(Variance_Explained_Table), sep=" ")
+colnames(Variance_Explained_Table) <- c("Eigenvalue", "Pct of explained variance", "Cumulative pct of explained variance")
+```
+
+Let's look at the **variance explained** as well as the **eigenvalues**
+
+```{r}
+iprint.df(round(Variance_Explained_Table, 2))
+```
+
+```{r}
+eigenvalues  <- Variance_Explained_Table[, "Eigenvalue"]
+df           <- cbind(as.data.frame(eigenvalues), c(1:length(eigenvalues)), rep(1, length(eigenvalues)))
+colnames(df) <- c("eigenvalues", "components", "abline")
+iplot.df(melt(df, id="components"))
+```
+
+## Interpret the factors
+
+This is how the "top factors" look like. 
+
+```{r}
+if (factor_selectionciterion == "eigenvalue")
+  factors_selected = sum(Variance_Explained_Table_copy[,1] >= 1)
+if (factor_selectionciterion == "variance")
+  factors_selected = 1:head(which(Variance_Explained_Table_copy[,"cumulative percentage of variance"]>= minimum_variance_explained),1)
+if (factor_selectionciterion == "manual")
+  factors_selected = manual_numb_factors_used
+```
+To better visualize them, we will use what is called a "rotation". There are many rotations methods. In this case we selected the `r rotation_used` rotation. For our data, the `r factors_selected` selected factors look as follows after this rotation: 
+
+```{r}
+Rotated_Results<-principal(ProjectDataFactor, nfactors=max(factors_selected), rotate=rotation_used,score=TRUE)
+Rotated_Factors<-round(Rotated_Results$loadings,2)
+Rotated_Factors<-as.data.frame(unclass(Rotated_Factors))
+colnames(Rotated_Factors)<-paste("Comp.",1:ncol(Rotated_Factors),sep="")
+
+sorted_rows <- sort(Rotated_Factors[,1], decreasing = TRUE, index.return = TRUE)$ix
+Rotated_Factors <- Rotated_Factors[sorted_rows,]
+
+iprint.df(Rotated_Factors, scale=TRUE)
+```
+
+To better visualize and interpret the factors we often "suppress" loadings with small values, e.g. with absolute values smaller than 0.5. In this case our factors look as follows after suppressing the small numbers:
+
+```{r}
+Rotated_Factors_thres <- Rotated_Factors
+Rotated_Factors_thres[abs(Rotated_Factors_thres) < MIN_VALUE]<-NA
+colnames(Rotated_Factors_thres)<- colnames(Rotated_Factors)
+rownames(Rotated_Factors_thres)<- rownames(Rotated_Factors)
+
+iprint.df(Rotated_Factors_thres, scale=TRUE)
+```
+
 - Step 2: visualization (?)
 - Step 3: create factors and decide which ones to keep based on a eigenvalue analysis
 - Step 4: interpret the factors

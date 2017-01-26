@@ -131,29 +131,29 @@ $(document).ready(function () {
 <li>Define Business Problem</li>
 </ol>
 <ul>
-<li>Lending Club allows people with weak financial knowledge to invest in what can be highly risky assets. Our goal is to provide potential investors with inteligence that allows them to make better investment decisions. For that purpose we analize 500k entries of past data past investment data to build a predictive model. Our key risk parameter will be the Probability of Default (PD), i.e. the probability of a lender not servicing his debt on time</li>
+<li>Produce a precise definition of the target variable: the specific quantity that will be the focus of the data mining</li>
+<li>PD: Probability of Default - probability of a lender not servicing his debt on time</li>
+<li>LGD: Loss Given Default - percentage of total return that is loss on average in the event of default</li>
 </ul>
 <ol start="2" style="list-style-type: decimal">
-<li>Collect and clean up Data</li>
+<li>Collect Data</li>
 </ol>
 <ul>
-<li>Step 1: download data from lendingclub.com or kaggle.com</li>
-<li>Step 2: test unique identifier for each entry/loan</li>
-<li>Step 3: eliminate variables that are out of scope or are too lengthy to parse/process for the benefit of analysis</li>
-<li>Step 4: create dummy variables for non-numeric values (…)</li>
+<li>Download data from lendingclub.com or kaggle.com</li>
+<li>Separate data entries (lenders) : loans finished from loans ongoing.</li>
+<li>Step 1: develop a model using loans finished entries</li>
+<li>Step 2: (if time allows) integrate information from ongoing loans data entries to improve the model</li>
 </ul>
 <ol start="3" style="list-style-type: decimal">
-<li>Dimentionality Reduction</li>
+<li>Clean Up Data</li>
 </ol>
 <ul>
-<li>Step 1: analysing correlations and identifying variables which are linear combinations of one another</li>
-<li>Step 2: visualization (?)</li>
-<li>Step 3: create factors and decide which ones to keep based on a eigenvalue analysis</li>
-<li>Step 4: interpret the factors</li>
-<li>(…)</li>
+<li>Eliminate variables that are out of scope or are too lengthy to parse/process for the benefit of analysis</li>
+<li>Create dummies for non-numeric values</li>
+<li>Factor the variables</li>
 </ul>
 <ol start="4" style="list-style-type: decimal">
-<li><p>Clustering</p></li>
+<li><p>Decide on the type of model to use (e.g. classification tree or logistic regression)</p></li>
 <li><p>Choose method to avoid overfitting</p></li>
 <li>Build and test the model</li>
 </ol>
