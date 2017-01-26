@@ -27,7 +27,7 @@ Before beginning the analysis of the data, ensure that the raw data is complete 
 
 ```{r setupdata1E, echo=TRUE, tidy=TRUE}
 # Please ENTER the name of the file with the data used. The file should be a .csv with one row per observation (e.g. person) and one column per attribute. Do not add .csv at the end, make sure the data are numeric.
-datafile_name = "../bdagroupproject/Data/loancopy"
+datafile_name = "../bdagroupproject/Data/loancopy.csv"
 
 # Please enter the minimum number below which you would like not to print - this makes the readability of the tables easier. Default values are either 10e6 (to print everything) or 0.5. Try both to see the difference.
 MIN_VALUE = 0.5
