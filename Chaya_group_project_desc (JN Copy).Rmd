@@ -8,6 +8,15 @@ author: "Chaya Maheshwari, Pedro Henriques, Jada Neumann, Stanislaw Ostoja-Starz
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r setuplibraries, echo=FALSE, message=FALSE}
+suppressWarnings(source("../../AnalyticsLibraries/library.R"))
+# Package options
+suppressWarnings(ggthemr('fresh'))  # ggplot theme
+opts_knit$set(progress=FALSE, verbose=FALSE)
+opts_chunk$set(echo=FALSE, fig.align="center", fig.width=10, fig.height=6.35, results="asis")
+options(knitr.kable.NA = '')
+```
+
 ##Problem Statement:
 
 The project aims to segment Lending Club's customers base so that P2P investors are better able to understand their expected returns given their lenders characetrisitics. For that purpose we will use two variables: PD (Probability of Default) and LGD (Loss Given Default). We will then have a model that allows us to estimate expected returns for each investment.
@@ -84,7 +93,7 @@ In order to begin analysing the data (generating descriptive statistics, etc.), 
 ### 4) Scale the Data
 
 <>
-
+# Chaya: shall we do it?
 
 ### 5) Dimentionality Reduction
 
@@ -135,10 +144,12 @@ Clearly the different column variables have several correlations between them, s
 
 ```{r}
 # Here is how the `principal` function is used 
-UnRotated_Results<-principal(ProjectDataFactor, nfactors=ncol(ProjectDataFactor), rotate="none",score=TRUE)
+UnRotated_Results<-principal(thecor, nfactors=ncol(thecor), rotate="none",score=TRUE)
+
 UnRotated_Factors<-round(UnRotated_Results$loadings,2)
 UnRotated_Factors<-as.data.frame(unclass(UnRotated_Factors))
 colnames(UnRotated_Factors)<-paste("Comp",1:ncol(UnRotated_Factors),sep="")
+iprint.df(round(UnRotated_Factors, 2))
 ```
 
 ```{r}
@@ -179,7 +190,7 @@ if (factor_selectionciterion == "manual")
 To better visualize them, we will use what is called a "rotation". There are many rotations methods. In this case we selected the `r rotation_used` rotation. For our data, the `r factors_selected` selected factors look as follows after this rotation: 
 
 ```{r}
-Rotated_Results<-principal(ProjectDataFactor, nfactors=max(factors_selected), rotate=rotation_used,score=TRUE)
+Rotated_Results<-principal(thecor, nfactors=max(factors_selected), rotate=rotation_used,score=TRUE)
 Rotated_Factors<-round(Rotated_Results$loadings,2)
 Rotated_Factors<-as.data.frame(unclass(Rotated_Factors))
 colnames(Rotated_Factors)<-paste("Comp.",1:ncol(Rotated_Factors),sep="")
@@ -206,7 +217,57 @@ iprint.df(Rotated_Factors_thres, scale=TRUE)
 - Step 4: interpret the factors
 - (...)
 
+# Part 2: Customer Segmentation 
 ### 6) Clustering
+
+```{r setupcluster, echo=TRUE, tidy=TRUE}
+# We ENTER then original raw attributes that correspond to eigenvalues, to use for the segmentation (the "segmentation attributes")
+segmentation_attributes_used = c(8,3,12,21,9,13,20,23,16 ) #c(6,1,10,19,7,11,18,21,14 )
+
+# Please ENTER then original raw attributes to use for the profiling of the segments (the "profiling attributes")
+# Please use numbers, not column names, e.g. c(1:5, 7, 8) uses columns 1,2,3,4,5,7,8
+profile_attributes_used = c(1:21) 
+
+# Please ENTER the number of clusters to eventually use for this report
+numb_clusters_used = 7 # for loans use X - depending on findings
+
+# Please enter the method to use for the segmentation:
+profile_with = "hclust" #  "hclust" or "kmeans"
+
+# Please ENTER the distance metric eventually used for the clustering in case of hierarchical clustering 
+# (e.g. "euclidean", "maximum", "manhattan", "canberra", "binary" or "minkowski" - see help(dist)). 
+# DEFAULT is "euclidean"
+distance_used = "euclidean"
+
+# Please ENTER the hierarchical clustering method to use (options are:
+# "ward", "single", "complete", "average", "mcquitty", "median" or "centroid").
+# DEFAULT is "ward"
+hclust_method = "ward.D"
+
+# Please ENTER the kmeans clustering method to use (options are:
+# "Hartigan-Wong", "Lloyd", "Forgy", "MacQueen").
+# DEFAULT is "Lloyd"
+kmeans_method = "Lloyd"
+
+```
+
+```{r}
+# Same as the initial data
+ProjectData <- ProjectData_INITIAL
+
+segmentation_attributes_used <- intersect(segmentation_attributes_used, 1:ncol(ProjectData))
+profile_attributes_used <- intersect(profile_attributes_used, 1:ncol(ProjectData))
+
+ProjectData_segment <- ProjectData[,segmentation_attributes_used]
+ProjectData_profile <- ProjectData[,profile_attributes_used]
+
+ProjectData_scaled <- apply(ProjectData, 2, function(r) if (sd(r)!=0) (r-mean(r))/sd(r) else 0*r)
+```
+
+
+
+
+
 
 ### 7) Choose method to avoid overfitting
 
