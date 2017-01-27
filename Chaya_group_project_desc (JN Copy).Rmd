@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r setuplibraries, echo=FALSE, message=FALSE}
-suppressWarnings(source("../../AnalyticsLibraries/library.R"))
+suppressWarnings(source("../INSEADAnalytics/AnalyticsLibraries/library.R"))
 # Package options
 suppressWarnings(ggthemr('fresh'))  # ggplot theme
 opts_knit$set(progress=FALSE, verbose=FALSE)
@@ -181,11 +181,11 @@ This is how the "top factors" look like.
 
 ```{r}
 if (factor_selectionciterion == "eigenvalue")
-  factors_selected = sum(Variance_Explained_Table_copy[,1] >= 1)
+  factors_selected <- sum(Variance_Explained_Table_copy[,1] >= 1)
 if (factor_selectionciterion == "variance")
-  factors_selected = 1:head(which(Variance_Explained_Table_copy[,"cumulative percentage of variance"]>= minimum_variance_explained),1)
+  factors_selected <- 1:head(which(Variance_Explained_Table_copy[,"cumulative percentage of variance"]>= minimum_variance_explained),1)
 if (factor_selectionciterion == "manual")
-  factors_selected = manual_numb_factors_used
+  factors_selected <- manual_numb_factors_used
 ```
 To better visualize them, we will use what is called a "rotation". There are many rotations methods. In this case we selected the `r rotation_used` rotation. For our data, the `r factors_selected` selected factors look as follows after this rotation: 
 
@@ -253,15 +253,15 @@ kmeans_method = "Lloyd"
 
 ```{r}
 # Same as the initial data
-ProjectData <- ProjectData_INITIAL
+#ProjectData <- ProjectData_INITIAL
 
-segmentation_attributes_used <- intersect(segmentation_attributes_used, 1:ncol(ProjectData))
-profile_attributes_used <- intersect(profile_attributes_used, 1:ncol(ProjectData))
+#segmentation_attributes_used <- intersect(segmentation_attributes_used, 1:ncol(ProjectData))
+#profile_attributes_used <- intersect(profile_attributes_used, 1:ncol(ProjectData))
 
-ProjectData_segment <- ProjectData[,segmentation_attributes_used]
-ProjectData_profile <- ProjectData[,profile_attributes_used]
+#ProjectData_segment <- ProjectData[,segmentation_attributes_used]
+#ProjectData_profile <- ProjectData[,profile_attributes_used]
 
-ProjectData_scaled <- apply(ProjectData, 2, function(r) if (sd(r)!=0) (r-mean(r))/sd(r) else 0*r)
+#ProjectData_scaled <- apply(ProjectData, 2, function(r) if (sd(r)!=0) (r-mean(r))/sd(r) else 0*r)
 ```
 
 
