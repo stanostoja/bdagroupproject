@@ -4,13 +4,12 @@ output: html_document
 author: "Chaya Maheshwari, Pedro Henriques, Jada Neumann, Stanislaw Ostoja-Starzewski"
 ---
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r setuplibraries, echo=FALSE, message=FALSE}
-suppressWarnings(source("../INSEADAnalytics/AnalyticsLibraries/library.R"))
+suppressWarnings(source("0_lib/library.R"))
 # Package options
 suppressWarnings(ggthemr('fresh'))  # ggplot theme
 opts_knit$set(progress=FALSE, verbose=FALSE)
@@ -129,91 +128,6 @@ ProjectDataFactor <- ProjectData[,factor_attributes_used]
 ProjectDataFactor <- ProjectData <- data.matrix(ProjectDataFactor)
 ```
 
-```{r setuplibraries, echo=FALSE, message=FALSE}
-# SET UP
-# type in the Console below help(getwd) and help(setwd) for more information, to make sure you are in the right directory
-local_directory <- "."
-suppressWarnings(source(paste(local_directory,"../../AnalyticsLibraries/library.R", sep="/")))
-
-# Package options
-suppressWarnings(ggthemr('fresh'))  # ggplot theme
-opts_knit$set(progress=FALSE, verbose=FALSE)
-opts_chunk$set(echo=FALSE, fig.align="center", fig.width=10, fig.height=6.35, results="asis")
-options(knitr.kable.NA = '')
-
-# Determine document output format, return "html" by default
-getDocumentOutputFormat <- function() {
-  format <- opts_knit$get('rmarkdown.pandoc.to')
-  if (!is.null(format)) format else "html"
-}
-
-# Format tables for html/latex output
-normalize.abs <- function(x, min=0, max=1, na.rm=FALSE) normalize(abs(x), min, max, na.rm)
-iprint.df <- function(df, scale=FALSE) {
-  if (getDocumentOutputFormat() == "html") {
-    if (class(df) != "data.frame")
-      df <- as.data.frame(df)
-    x <- lapply(colnames(df), function(col) {
-      if (is.numeric(df[, col]))
-        color_bar(rgb(238, 238, 238, max=255), normalize.abs, min=0.1, na.rm=TRUE)
-      else
-        formatter("span")
-    })
-    names(x) <- colnames(df)
-    tags$div(class="formattable_container", HTML(gsub("NA", "", format_table(df, x))))
-  } else if (opts_knit$get('rmarkdown.pandoc.to') == "latex") {
-    cat(ifelse(scale, "\\setkeys{Gin}{height=\\textheight}\\adjustbox{width=\\linewidth}{", "\\begin{center}"))
-    cat(kable(df, format="latex", booktabs=TRUE, longtable=!scale))
-    cat(ifelse(scale, "}\\setkeys{Gin}{height=\\maxheight}", "\\end{center}"))
-  } else {
-    kable(df)
-  }
-}
-
-# Format plots for html/latex output
-iplot.df <- function(df, x=colnames(df)[1], y="value", v="variable", type="line", xlab=NULL, ylab=NULL) {
-  if (getDocumentOutputFormat() == "html") {
-    p <- c3(df, x=x, y=y, group=v, width="100%", height="480px")
-    p <- switch(type,
-      line = p %>% c3_line('spline'),
-      bar  = p %>% c3_bar(bar_width=0.90)
-    )
-    if (!is.null(xlab)) p <- p %>% xAxis(label=xlab)
-    if (!is.null(ylab)) p <- p %>% yAxis(label=ylab)
-    p
-  } else {  # latex, etc.
-    p <- ggplot(df, aes_string(x=x, y=y, colour=v))
-    p <- switch(type,
-      line = p + geom_line(),
-      bar  = p + geom_bar(stat="identity")
-    )
-    if (!is.null(xlab)) p <- p + labs(x=xlab)
-    if (!is.null(ylab)) p <- p + labs(y=ylab)
-    p
-  }
-}
-
-iplot.hist <- function(x, breaks="Sturges", xlab=NULL) {
-  h <- hist(x, breaks=breaks, plot=FALSE)
-  df <- data.frame(x=head(h$breaks, -1), Frequency=h$counts)
-  iplot.df(df, x="x", y="Frequency", v=NULL, type="bar", xlab=xlab)
-}
-
-iplot.grid <- if (getDocumentOutputFormat() == "html") tags$div else grid.arrange
-
-iplot.dendrogram <- function(cluster) {
-  labels <- (length(cluster$labels) > 40)
-  if (getDocumentOutputFormat() == "html") {
-    cluster$labels <- if (!labels) NULL else cluster$labels
-    margins <- list(top=10, right=0, bottom=ifelse(labels, 120, 10), left=0)
-    dendroNetwork(cluster, width="100%", height="480px", fontSize=14,
-                  treeOrientation="vertical", margins=margins, textRotate=90)
-  } else {  # latex, etc.
-    ggdendrogram(Hierarchical_Cluster, theme_dendro=FALSE, labels=labels) +
-      xlab("Observations") + ylab("Height")
-  }
-}
-```
 ## Check Correlations
 
 Analysing correlations and identifying variables which are linear combinations of one another. This is the correlation matrix of all the different attributes/variables for the unique customers we have. 
@@ -312,7 +226,7 @@ segmentation_attributes_used = c(8,3,12,21,9,13,20,23,16 ) #c(6,1,10,19,7,11,18,
 
 # Please ENTER then original raw attributes to use for the profiling of the segments (the "profiling attributes")
 # Please use numbers, not column names, e.g. c(1:5, 7, 8) uses columns 1,2,3,4,5,7,8
-profile_attributes_used = c(1:21) 
+profile_attributes_used = c(3:23) 
 
 # Please ENTER the number of clusters to eventually use for this report
 numb_clusters_used = 7 # for loans use X - depending on findings
@@ -339,18 +253,175 @@ kmeans_method = "Lloyd"
 
 ```{r}
 # Same as the initial data
-#ProjectData <- ProjectData_INITIAL
+ProjectData <- ProjectData_INITIAL[1:2000,]
 
 #segmentation_attributes_used <- intersect(segmentation_attributes_used, 1:ncol(ProjectData))
-#profile_attributes_used <- intersect(profile_attributes_used, 1:ncol(ProjectData))
+profile_attributes_used <- intersect(profile_attributes_used, 1:ncol(ProjectData))
 
-#ProjectData_segment <- ProjectData[,segmentation_attributes_used]
-#ProjectData_profile <- ProjectData[,profile_attributes_used]
+ProjectData_segment <- ProjectData[,segmentation_attributes_used]
+ProjectData_profile <- ProjectData[,profile_attributes_used]
 
-#ProjectData_scaled <- apply(ProjectData, 2, function(r) if (sd(r)!=0) (r-mean(r))/sd(r) else 0*r)
+ProjectData_scaled <- apply(ProjectData, 2, function(r) if (sd(r)!=0) (r-mean(r))/sd(r) else 0*r)
+```
+
+## Steps 1-2: Explore the data
+(This was done above, so we skip it)
+
+## Step 3. Select Segmentation Variables
+
+For simplicity will use one representative question for each of the factor we found in Part 1 (we can also use the "factor scores" for each respondent) to represent our survey respondents. These are the `segmentation_attributes_used` selected below. We can choose the question with the highest absolute factor loading for each factor. For example, when we use 5 factors with the varimax rotation we can select questions Q.1.9 (I see my boat as a status symbol), Q1.18 (Boating gives me a feeling of adventure), Q1.4 (I only consider buying a boat from a reputable brand), Q1.11 (I tend to perform minor boat repairs and maintenance on my own) and Q1.2 (When buying a boat  getting the lowest price is more important than the boat brand) - try it. These are columns 10, 19, 5, 12, and 3, respectively of the data matrix `Projectdata`. 
+## Step 4: Define similarity measure
+
+We need to define a distance metric that measures how different people (observations in general) are from each other. This can be an important choice. Here are the differences between the observations using the distance metric we selected:
+
+```{r}
+euclidean_pairwise <- as.matrix(dist(head(ProjectData_segment, max_data_report), method="euclidean"))
+euclidean_pairwise <- euclidean_pairwise*lower.tri(euclidean_pairwise) + euclidean_pairwise*diag(euclidean_pairwise) + 10e10*upper.tri(euclidean_pairwise)
+euclidean_pairwise[euclidean_pairwise==10e10] <- NA
+rownames(euclidean_pairwise) <- colnames(euclidean_pairwise) <- sprintf("Obs.%02d", 1:max_data_report)
+
+iprint.df(round(euclidean_pairwise))
+```
+
+## Step 5: Visualize Pair-wise Distances
+
+We can see the histogram of, say, the first 2 variables (can you change the code chunk in the raw .Rmd file to see other variables?)
+
+```{r}
+variables_to_plot = 1:8
+do.call(iplot.grid, lapply(variables_to_plot, function(n){
+  iplot.hist(ProjectData_segment[, n], breaks=5, xlab = paste("Variable", n))
+}))
+```
+
+or the histogram of all pairwise distances for the `r distance_used` distance:
+
+```{r}
+Pairwise_Distances <- dist(ProjectData_segment, method = distance_used) 
+iplot.hist(Pairwise_Distances, breaks=10)
+```
+
+## Step 6: Method and Number of Segments
+
+We need to select the clustering method to use, as well as the number of cluster. It may be useful to see the dendrogram from Hierarchical Clustering, to have a quick idea of how the data may be segmented and how many segments there may be. Here is the dendrogram for our data:
+
+```{r}
+Hierarchical_Cluster_distances <- Pairwise_Distances #dist(ProjectData_segment, method=distance_used)
+Hierarchical_Cluster <- hclust(Hierarchical_Cluster_distances, method=hclust_method)
+#Display dendogram
+iplot.dendrogram(Hierarchical_Cluster)
+# TODO: Draw dendogram with red borders around the 3 clusters
+#rect.hclust(Hierarchical_Cluster, k=numb_clusters_used, border="red") 
+```
+
+We can also plot the "distances" traveled before we need to merge any of the lower and smaller in size clusters into larger ones - the heights of the tree branches that link the clusters as we traverse the tree from its leaves to its root. If we have n observations, this plot has n-1 numbers, we see the first 20 here. 
+```{r}
+num <- nrow(ProjectData) - 1
+df1 <- cbind(as.data.frame(Hierarchical_Cluster$height[length(Hierarchical_Cluster$height):1]), c(1:num))
+colnames(df1) <- c("distances","index")
+iplot.df(melt(head(df1, 20), id="index"), xlab="Number of Components")
+```
+
+Here is the segment membership of the first `r max_data_report` respondents if we use hierarchical clustering:
+
+```{r}
+cluster_memberships_hclust <- as.vector(cutree(Hierarchical_Cluster, k=numb_clusters_used)) # cut tree into 3 clusters
+cluster_ids_hclust=unique(cluster_memberships_hclust)
+
+ProjectData_with_hclust_membership <- cbind(1:length(cluster_memberships_hclust),cluster_memberships_hclust)
+colnames(ProjectData_with_hclust_membership)<-c("Observation Number","Cluster_Membership")
+
+iprint.df(round(head(ProjectData_with_hclust_membership, max_data_report), 2))
+```
+
+while this is the segment membership if we use k-means:
+
+```{r}
+kmeans_clusters <- kmeans(ProjectData_segment,centers= numb_clusters_used, iter.max=2000, algorithm=kmeans_method)
+
+ProjectData_with_kmeans_membership <- cbind(1:length(kmeans_clusters$cluster),kmeans_clusters$cluster)
+colnames(ProjectData_with_kmeans_membership)<-c("Observation Number","Cluster_Membership")
+
+iprint.df(round(head(ProjectData_with_kmeans_membership, max_data_report), 2))
 ```
 
 
+## Step 7: Profile and interpret the segments 
+
+In market segmentation one may use variables to **profile** the segments which are not the same (necessarily) as those used to **segment** the market: the latter may be, for example, attitude/needs related (you define segments based on what the customers "need"), while the former may be any information that allows a company to identify the defined customer segments (e.g. demographics, location, etc). Of course deciding which variables to use for segmentation and which to use for profiling (and then **activation** of the segmentation for business purposes) is largely subjective.  In this case we can use all survey questions for profiling for now - the `profile_attributes_used` variables selected below. 
+
+There are many ways to do the profiling of the segments. For example, here we show how the *average* answers of the respondents *in each segment* compare to the *average answer of all respondents* using the ratio of the two.  The idea is that if in a segment the average response to a question is very different (e.g. away from ratio of 1) than the overall average, then that question may indicate something about the segment relative to the total population. 
+
+Here are for example the profiles of the segments using the clusters found above.  First let's see just the average answer people gave to each question for the different segments as well as the total population:
+
+```{r}
+cluster_memberships_kmeans <- kmeans_clusters$cluster 
+cluster_ids_kmeans <- unique(cluster_memberships_kmeans)
+
+if (profile_with == "hclust"){
+  cluster_memberships <- cluster_memberships_hclust
+  cluster_ids <-  cluster_ids_hclust  
+}
+if (profile_with == "kmeans"){
+  cluster_memberships <- cluster_memberships_kmeans
+  cluster_ids <-  cluster_ids_kmeans
+}
+
+# WE WILL USE THESE IN THE CLASSIFICATION PART LATER
+NewData = matrix(cluster_memberships,ncol=1)
+
+population_average = matrix(apply(ProjectData_profile, 2, mean), ncol=1)
+colnames(population_average) <- "Population"
+Cluster_Profile_mean <- sapply(sort(cluster_ids), function(i) apply(ProjectData_profile[(cluster_memberships==i), ], 2, mean))
+if (ncol(ProjectData_profile) <2)
+  Cluster_Profile_mean=t(Cluster_Profile_mean)
+colnames(Cluster_Profile_mean) <- paste("Seg.", 1:length(cluster_ids), sep="")
+cluster.profile <- cbind (population_average,Cluster_Profile_mean)
+
+iprint.df(round(cluster.profile, 2))
+```
+
+We can also "visualize" the segments using **snake plots** for each cluster. For example, we can plot the means of the profiling variables for each of our clusters to better visualize differences between segments. For better visualization we plot the standardized profiling variables.
+
+```{r}
+ProjectData_scaled_profile = ProjectData_scaled[, profile_attributes_used,drop=F]
+
+Cluster_Profile_standar_mean <- sapply(sort(cluster_ids), function(i) apply(ProjectData_scaled_profile[(cluster_memberships==i), ,drop = F], 2, mean))
+if (ncol(ProjectData_scaled_profile) < 2)
+  Cluster_Profile_standar_mean = t(Cluster_Profile_standar_mean)
+colnames(Cluster_Profile_standar_mean) <- paste("Seg ", 1:length(cluster_ids), sep="")
+
+iplot.df(melt(cbind.data.frame(idx=as.numeric(1:nrow(Cluster_Profile_standar_mean)), Cluster_Profile_standar_mean), id="idx"), xlab="Profiling variables (standardized)",  ylab="Mean of cluster")
+```
+
+We can also compare the averages of the profiling variables of each segment relative to the average of the variables across the whole population. This can also help us better understand whether  there are indeed clusters in our data (e.g. if all segments are much like the overall population, there may be no segments). For example, we can measure the ratios of the average for each cluster to the average of the population, minus 1, (e.g. `avg(cluster)` `/` `avg(population)` `-1`) for each segment and variable:
+
+```{r}
+population_average_matrix <- population_average[,"Population",drop=F] %*% matrix(rep(1,ncol(Cluster_Profile_mean)),nrow=1)
+cluster_profile_ratios <- (ifelse(population_average_matrix==0, 0,Cluster_Profile_mean/population_average_matrix))
+colnames(cluster_profile_ratios) <- paste("Seg.", 1:ncol(cluster_profile_ratios), sep="")
+rownames(cluster_profile_ratios) <- colnames(ProjectData)[profile_attributes_used]
+## printing the result in a clean-slate table
+iprint.df(round(cluster_profile_ratios-1, 2))
+```
+
+**Questions**
+
+1. What do the numbers in the last table indicate? What numbers are the more informative?
+2. Based on the tables and snake plot above, what are some key features of each of the segments of this solution?
+
+**Answers**
+
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
 
 
 
