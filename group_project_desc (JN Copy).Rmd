@@ -4,7 +4,6 @@ output: html_document
 author: "Chaya Maheshwari, Pedro Henriques, Jada Neumann, Stanislaw Ostoja-Starzewski"
 ---
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -26,10 +25,9 @@ Before beginning the analysis of the data, ensure that the raw data is complete 
 - Download data as a .csv file from lendingclub.com or kaggle.com
 - Load the data and make a working copy (so that none of the raw data was lost in case we wanted to recover it later)
 
-
 ```{r setupdata1E, echo=TRUE, tidy=TRUE}
 # Please ENTER the name of the file with the data used. The file should be a .csv with one row per observation (e.g. person) and one column per attribute. Do not add .csv at the end, make sure the data are numeric.
-datafile_name = "../bdagroupproject/Data/loancopy.csv"
+datafile_name = "../bdagroupproject/Data/CopyOfloancopy"
 
 # Please enter the minimum number below which you would like not to print - this makes the readability of the tables easier. Default values are either 10e6 (to print everything) or 0.5. Try both to see the difference.
 MIN_VALUE = 0.5
@@ -88,7 +86,6 @@ In order to begin analysing the data (generating descriptive statistics, etc.), 
 
 
 ### 5) Dimentionality Reduction
-
 - Step 1: analysing correlations and identifying variables which are linear combinations of one another
 
 ```{r setupfactor, echo=TRUE, tidy=TRUE}
@@ -119,106 +116,10 @@ factor_attributes_used <- intersect(factor_attributes_used, 1:ncol(ProjectData))
 ProjectDataFactor <- ProjectData[,factor_attributes_used]
 ProjectDataFactor <- ProjectData <- data.matrix(ProjectDataFactor)
 ```
-
-```{r setuplibraries, echo=FALSE, message=FALSE}
-# SET UP
-# type in the Console below help(getwd) and help(setwd) for more information, to make sure you are in the right directory
-local_directory <- "."
-suppressWarnings(source(paste(local_directory,"../../AnalyticsLibraries/library.R", sep="/")))
-
-# Package options
-suppressWarnings(ggthemr('fresh'))  # ggplot theme
-opts_knit$set(progress=FALSE, verbose=FALSE)
-opts_chunk$set(echo=FALSE, fig.align="center", fig.width=10, fig.height=6.35, results="asis")
-options(knitr.kable.NA = '')
-
-# Determine document output format, return "html" by default
-getDocumentOutputFormat <- function() {
-  format <- opts_knit$get('rmarkdown.pandoc.to')
-  if (!is.null(format)) format else "html"
-}
-
-# Format tables for html/latex output
-normalize.abs <- function(x, min=0, max=1, na.rm=FALSE) normalize(abs(x), min, max, na.rm)
-iprint.df <- function(df, scale=FALSE) {
-  if (getDocumentOutputFormat() == "html") {
-    if (class(df) != "data.frame")
-      df <- as.data.frame(df)
-    x <- lapply(colnames(df), function(col) {
-      if (is.numeric(df[, col]))
-        color_bar(rgb(238, 238, 238, max=255), normalize.abs, min=0.1, na.rm=TRUE)
-      else
-        formatter("span")
-    })
-    names(x) <- colnames(df)
-    tags$div(class="formattable_container", HTML(gsub("NA", "", format_table(df, x))))
-  } else if (opts_knit$get('rmarkdown.pandoc.to') == "latex") {
-    cat(ifelse(scale, "\\setkeys{Gin}{height=\\textheight}\\adjustbox{width=\\linewidth}{", "\\begin{center}"))
-    cat(kable(df, format="latex", booktabs=TRUE, longtable=!scale))
-    cat(ifelse(scale, "}\\setkeys{Gin}{height=\\maxheight}", "\\end{center}"))
-  } else {
-    kable(df)
-  }
-}
-
-# Format plots for html/latex output
-iplot.df <- function(df, x=colnames(df)[1], y="value", v="variable", type="line", xlab=NULL, ylab=NULL) {
-  if (getDocumentOutputFormat() == "html") {
-    p <- c3(df, x=x, y=y, group=v, width="100%", height="480px")
-    p <- switch(type,
-      line = p %>% c3_line('spline'),
-      bar  = p %>% c3_bar(bar_width=0.90)
-    )
-    if (!is.null(xlab)) p <- p %>% xAxis(label=xlab)
-    if (!is.null(ylab)) p <- p %>% yAxis(label=ylab)
-    p
-  } else {  # latex, etc.
-    p <- ggplot(df, aes_string(x=x, y=y, colour=v))
-    p <- switch(type,
-      line = p + geom_line(),
-      bar  = p + geom_bar(stat="identity")
-    )
-    if (!is.null(xlab)) p <- p + labs(x=xlab)
-    if (!is.null(ylab)) p <- p + labs(y=ylab)
-    p
-  }
-}
-
-iplot.hist <- function(x, breaks="Sturges", xlab=NULL) {
-  h <- hist(x, breaks=breaks, plot=FALSE)
-  df <- data.frame(x=head(h$breaks, -1), Frequency=h$counts)
-  iplot.df(df, x="x", y="Frequency", v=NULL, type="bar", xlab=xlab)
-}
-
-iplot.grid <- if (getDocumentOutputFormat() == "html") tags$div else grid.arrange
-
-iplot.dendrogram <- function(cluster) {
-  labels <- (length(cluster$labels) > 40)
-  if (getDocumentOutputFormat() == "html") {
-    cluster$labels <- if (!labels) NULL else cluster$labels
-    margins <- list(top=10, right=0, bottom=ifelse(labels, 120, 10), left=0)
-    dendroNetwork(cluster, width="100%", height="480px", fontSize=14,
-                  treeOrientation="vertical", margins=margins, textRotate=90)
-  } else {  # latex, etc.
-    ggdendrogram(Hierarchical_Cluster, theme_dendro=FALSE, labels=labels) +
-      xlab("Observations") + ylab("Height")
-  }
-}
-```
-## Check Correlations
-
-Analysing correlations and identifying variables which are linear combinations of one another. This is the correlation matrix of all the different attributes/variables for the unique customers we have. 
-
-
 ```{r}
 thecor = round(cor(ProjectDataFactor),2)
 iprint.df(round(thecor,2), scale=TRUE)
 ```
-
-## Choose number of factors
-
-Clearly the different column variables have several correlations between them, so we may be able to actually "group" these variables into only a few "key factors". This not only will simplify the data, but will also greatly facilitate our understanding of the lenders club members.
-
 ```{r}
 # Here is how the `principal` function is used 
 UnRotated_Results<-principal(ProjectDataFactor, nfactors=ncol(ProjectDataFactor), rotate="none",score=TRUE)
@@ -237,7 +138,6 @@ rownames(Variance_Explained_Table) <- paste("Component", 1:nrow(Variance_Explain
 colnames(Variance_Explained_Table) <- c("Eigenvalue", "Pct of explained variance", "Cumulative pct of explained variance")
 ```
 
-Let's look at the **variance explained** as well as the **eigenvalues**
 
 ```{r}
 iprint.df(round(Variance_Explained_Table, 2))
@@ -249,44 +149,6 @@ df           <- cbind(as.data.frame(eigenvalues), c(1:length(eigenvalues)), rep(
 colnames(df) <- c("eigenvalues", "components", "abline")
 iplot.df(melt(df, id="components"))
 ```
-
-## Interpret the factors
-
-This is how the "top factors" look like. 
-
-```{r}
-if (factor_selectionciterion == "eigenvalue")
-  factors_selected = sum(Variance_Explained_Table_copy[,1] >= 1)
-if (factor_selectionciterion == "variance")
-  factors_selected = 1:head(which(Variance_Explained_Table_copy[,"cumulative percentage of variance"]>= minimum_variance_explained),1)
-if (factor_selectionciterion == "manual")
-  factors_selected = manual_numb_factors_used
-```
-To better visualize them, we will use what is called a "rotation". There are many rotations methods. In this case we selected the `r rotation_used` rotation. For our data, the `r factors_selected` selected factors look as follows after this rotation: 
-
-```{r}
-Rotated_Results<-principal(ProjectDataFactor, nfactors=max(factors_selected), rotate=rotation_used,score=TRUE)
-Rotated_Factors<-round(Rotated_Results$loadings,2)
-Rotated_Factors<-as.data.frame(unclass(Rotated_Factors))
-colnames(Rotated_Factors)<-paste("Comp.",1:ncol(Rotated_Factors),sep="")
-
-sorted_rows <- sort(Rotated_Factors[,1], decreasing = TRUE, index.return = TRUE)$ix
-Rotated_Factors <- Rotated_Factors[sorted_rows,]
-
-iprint.df(Rotated_Factors, scale=TRUE)
-```
-
-To better visualize and interpret the factors we often "suppress" loadings with small values, e.g. with absolute values smaller than 0.5. In this case our factors look as follows after suppressing the small numbers:
-
-```{r}
-Rotated_Factors_thres <- Rotated_Factors
-Rotated_Factors_thres[abs(Rotated_Factors_thres) < MIN_VALUE]<-NA
-colnames(Rotated_Factors_thres)<- colnames(Rotated_Factors)
-rownames(Rotated_Factors_thres)<- rownames(Rotated_Factors)
-
-iprint.df(Rotated_Factors_thres, scale=TRUE)
-```
-
 - Step 2: visualization (?)
 - Step 3: create factors and decide which ones to keep based on a eigenvalue analysis
 - Step 4: interpret the factors
