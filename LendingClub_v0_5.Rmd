@@ -437,7 +437,7 @@ iprint.df(round(cluster_profile_ratios-1, 2))
 -  Segment 4: average population representative  
 -  Segment 5: high loan amount and income, and no derogatory public record  
 
-# Part 3: Purchase Drivers  
+# Part 3: Default Drivers  
 ### Step 1: Build and test the model  
 - use 80% of the retained data entries to build the model
 - use remaining 10% of data entries to test the model. Define the threshold values for test success.
@@ -453,8 +453,8 @@ independent_variables= c(3:14,16:21)
 
 # Enter the profit/cost values for the correctly and wrong classified data:
 actual_1_predict_1 = 100
-actual_1_predict_0 = -50
-actual_0_predict_1 = -100
+actual_1_predict_0 = -75
+actual_0_predict_1 = -50
 actual_0_predict_0 = 0
 
 # Enter the probability threshold above which an observations  
@@ -610,3 +610,119 @@ validation_prediction_class_log=1*as.vector(validation_Probability_class1_log > 
 test_prediction_class_log=1*as.vector(test_Probability_class1_log > Probability_Threshold)
 ```
 
+
+After also running the large tree and the logistic regression classifiers, we can then check how much "weight" these three methods put on the different default drivers:
+
+```{r echo=FALSE, message=FALSE, prompt=FALSE, results='asis'}
+
+log_importance = tail(log_coefficients[,"z value", drop=F],-1) # remove the intercept
+log_importance = log_importance/max(abs(log_importance))
+
+tree_importance = CART_tree$variable.importance
+tree_ordered_drivers = as.numeric(gsub("\\IV"," ",names(CART_tree$variable.importance)))
+tree_importance_final = rep(0,length(independent_variables))
+tree_importance_final[tree_ordered_drivers] <- tree_importance
+tree_importance_final <- tree_importance_final/max(abs(tree_importance_final))
+tree_importance_final <- tree_importance_final*sign(log_importance)
+
+large_tree_importance = CART_tree_large$variable.importance
+large_tree_ordered_drivers = as.numeric(gsub("\\IV"," ",names(CART_tree_large$variable.importance)))
+large_tree_importance_final = rep(0,length(independent_variables))
+large_tree_importance_final[large_tree_ordered_drivers] <- large_tree_importance
+large_tree_importance_final <- large_tree_importance_final/max(abs(large_tree_importance_final))
+large_tree_importance_final <- large_tree_importance_final*sign(log_importance)
+
+Importance_table <- cbind(tree_importance_final,large_tree_importance_final, log_importance)
+colnames(Importance_table) <- c("CART 1", "CART 2", "Logistic Regr.")
+rownames(Importance_table) <- rownames(log_importance)
+
+iprint.df(Importance_table)
+```
+
+Finally, if we were to use the estimated classification models on the test data, we would get the following default curves (see the raw .Rmd file to select the business profit parameters). 
+
+The default curve using the small classification tree: 
+
+```{r echo=FALSE,results='asis',warning=FALSE,error=FALSE}
+
+actual_class<- test_data[,dependent_variable]
+
+probs = test_Probability_class1_tree
+xaxis = sort(unique(c(0,1,probs)), decreasing = TRUE)
+res = Reduce(cbind,lapply(xaxis, function(prob){
+  useonly = which(probs >= prob)
+  predict_class = 1*(probs >= prob)
+  theprofit = Profit_Matrix[1,1]*sum(predict_class==1 & actual_class ==1)+
+    Profit_Matrix[1,2]*sum(predict_class==0 & actual_class ==1)+
+    Profit_Matrix[2,1]*sum(predict_class==1 & actual_class ==0)+
+    Profit_Matrix[2,2]*sum(predict_class==0 & actual_class ==0)
+  
+  c(100*length(useonly)/length(actual_class), theprofit) 
+  }))
+xaxis = res[1,]; yaxis = res[2,]
+df<-data.frame(Percentile = xaxis, Profit = yaxis)
+c3(df, x="Percentile", y="Profit") %>% c3_line('spline')
+
+best_profits_small_tree = df[which.max(df$Profit),]
+
+```
+
+The default curve using the large classification tree: 
+
+```{r echo=FALSE,results='asis',warning=FALSE,error=FALSE}
+
+probs = test_Probability_class1_tree_large
+xaxis = sort(unique(c(0,1,probs)), decreasing = TRUE)
+res = Reduce(cbind,lapply(xaxis, function(prob){
+  useonly = which(probs >= prob)
+  predict_class = 1*(probs >= prob)
+  theprofit = Profit_Matrix[1,1]*sum(predict_class==1 & actual_class ==1)+
+    Profit_Matrix[1,2]*sum(predict_class==0 & actual_class ==1)+
+    Profit_Matrix[2,1]*sum(predict_class==1 & actual_class ==0)+
+    Profit_Matrix[2,2]*sum(predict_class==0 & actual_class ==0)
+  
+  c(100*length(useonly)/length(actual_class), theprofit) 
+  }))
+xaxis = res[1,]; yaxis = res[2,]
+names(xaxis)<- NULL; names(yaxis) <- NULL
+df<-data.frame(Percentile = xaxis, Profit = yaxis)
+c3(df, x="Percentile", y="Profit") %>% c3_line('spline')
+best_profits_large_tree = df[which.max(df$Profit),]
+
+```
+
+
+The default curve using the logistic regression classifier: 
+
+```{r echo=FALSE,results='asis',warning=FALSE,error=FALSE}
+
+probs = test_Probability_class1_log
+xaxis = sort(unique(c(0,1,probs)), decreasing = TRUE)
+res = Reduce(cbind,lapply(xaxis, function(prob){
+  useonly = which(probs >= prob)
+  predict_class = 1*(probs >= prob)
+  theprofit = Profit_Matrix[1,1]*sum(predict_class==1 & actual_class ==1)+
+    Profit_Matrix[1,2]*sum(predict_class==0 & actual_class ==1)+
+    Profit_Matrix[2,1]*sum(predict_class==1 & actual_class ==0)+
+    Profit_Matrix[2,2]*sum(predict_class==0 & actual_class ==0)
+  
+  c(100*length(useonly)/length(actual_class), theprofit) 
+  }))
+xaxis = res[1,]; yaxis = res[2,]
+names(xaxis)<- NULL; names(yaxis) <- NULL
+df<-data.frame(Percentile = xaxis, Profit = yaxis)
+c3(df, x="Percentile", y="Profit") %>% c3_line('spline')
+
+best_profits_logistic = df[which.max(df$Profit),]
+
+```
+
+
+These are the maximum total profit achieved in the test data using the three classifiers (without any segment specific analysis so far).
+
+```{r echo=FALSE,results='asis',warning=FALSE,error=FALSE}
+best_profits = rbind(best_profits_small_tree, best_profits_large_tree, best_profits_logistic)
+rownames(best_profits) <- c("Small Tree", "Large Tree", "Logistic Regression")
+iprint.df(round(best_profits, 2))
+```
+<br>
