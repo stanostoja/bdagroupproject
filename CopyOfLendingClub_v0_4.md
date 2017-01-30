@@ -1943,11 +1943,9 @@ while this is the segment membership if we use k-means:
 
 ## Step 7: Profile and interpret the segments 
 
-In market segmentation one may use variables to **profile** the segments which are not the same (necessarily) as those used to **segment** the market: the latter may be, for example, attitude/needs related (you define segments based on what the customers "need"), while the former may be any information that allows a company to identify the defined customer segments (e.g. demographics, location, etc). Of course deciding which variables to use for segmentation and which to use for profiling (and then **activation** of the segmentation for business purposes) is largely subjective.  In this case we can use all survey questions for profiling for now - the `profile_attributes_used` variables selected below. 
+There are many ways to do the profiling of the segments. For example, here we show how the *average* attributes of the member IDs *in each segment* compare to the *average attributes of all member IDs* using the ratio of the two.  The idea is that if in a segment the average of the attribute is very different (e.g. away from ratio of 1) than the overall average, then that attribute may indicate something about the segment relative to the total population. 
 
-There are many ways to do the profiling of the segments. For example, here we show how the *average* answers of the respondents *in each segment* compare to the *average answer of all respondents* using the ratio of the two.  The idea is that if in a segment the average response to a question is very different (e.g. away from ratio of 1) than the overall average, then that question may indicate something about the segment relative to the total population. 
-
-Here are for example the profiles of the segments using the clusters found above.  First let's see just the average answer people gave to each question for the different segments as well as the total population:
+Here are for example, the profiles of the segments using the clusters found above.  First let's see just the average answer people gave to each question for the different segments as well as the total population:
 
 <!--html_preserve--><div class="formattable_container"><table class="table table-condensed">
  <thead>
@@ -2314,7 +2312,281 @@ We can also compare the averages of the profiling variables of each segment rela
 
 ### 7) Choose method to avoid overfitting
 
+# Part 3: Purchase Drivers
 ### 8) Build and test the model
 - use 80% of the retained data entries to build the model
 - use remaining 10% of data entries to test the model. Define the threshold values for test success.
+
+We are interested in understanding the purchase drivers, hence our **dependent** variable is "loan_status" column 17 of the Lending Club Loan data (purpose_debt). This variable takes value 1 if the loan was fully paid and 0 in the opposite case.
+
+
+```r
+# Please ENTER the class (dependent) variable: Please use numbers, not
+# column names! e.g. 82 uses the 82nd column are dependent variable.  YOU
+# NEED TO MAKE SURE THAT THE DEPENDENT VARIABLES TAKES ONLY 2 VALUES: 0 and
+# 1!!!
+dependent_variable = 17
+
+# Please ENTER the attributes to use as independent variables Please use
+# numbers, not column names! e.g. c(1:5, 7, 8) uses columns 1,2,3,4,5,7,8
+independent_variables = c(3:16, 18:23)  # use 54-80 for boats
+
+# Please ENTER the profit/cost values for the correctly and wrong classified
+# data:
+actual_1_predict_1 = 100
+actual_1_predict_0 = -75
+actual_0_predict_1 = -50
+actual_0_predict_0 = 0
+
+# Please ENTER the probability threshold above which an observations is
+# predicted as class 1:
+Probability_Threshold = 50  # between 1 and 99%
+
+# Please ENTER the percentage of data used for estimation
+estimation_data_percent = 80
+validation_data_percent = 10
+
+# Please enter 1 if you want to randomly split the data in estimation and
+# validation/test. 1 is necessary as the first 2000 rows in cvs file are
+# loanstatus=0
+random_sampling = 1
+
+# Tree parameter PLEASE ENTER THE Tree (CART) complexity control cp (e.g.
+# 0.001 to 0.02, depending on the data)
+CART_cp = 0.01
+
+# Please enter the minimum size of a segment for the analysis to be done
+# only for that segment
+min_segment = 100
+```
+
+
+
+This is a "small tree" classification for example:
+
+[1] "estimation_data avg loan success=" "0.86"                             
+[3] "validation_data avg loan success=" "0.84"                             
+[5] "test_data avg loan success="       "0.88"                             
+
+
+
+<img src="figure/unnamed-chunk-24-1.png" title="plot of chunk unnamed-chunk-24" alt="plot of chunk unnamed-chunk-24" style="display: block; margin: auto;" />
+
+
+
+
+
+
+
+
+```
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
+## ifelse(type == : prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
+## ifelse(type == : prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type =
+## ifelse(type == : prediction from a rank-deficient fit may be misleading
+```
+
+After also running the large tree and the logistic regression classifiers, we can then check how much "weight" these three methods put on the different purchase drivers (Q16 of the survey):
+
+
+```
+## Warning in tree_importance_final * sign(log_importance): longer object
+## length is not a multiple of shorter object length
+```
+
+```
+## Error in eval(expr, envir, enclos): dims [product 18] do not match the length of object [19]
+```
+
+```
+## Warning in large_tree_importance_final * sign(log_importance): longer
+## object length is not a multiple of shorter object length
+```
+
+```
+## Error in eval(expr, envir, enclos): dims [product 18] do not match the length of object [19]
+```
+
+```
+## Warning in cbind(tree_importance_final, large_tree_importance_final,
+## log_importance): number of rows of result is not a multiple of vector
+## length (arg 1)
+```
+
+<!--html_preserve--><div class="formattable_container"><table class="table table-condensed">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> CART 1 </th>
+   <th style="text-align:right;"> CART 2 </th>
+   <th style="text-align:right;"> Logistic Regr. </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> loan_amnt </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 100.00%">1.000000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 100.00%">1.00000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 28.00%">-0.23809524</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> term </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.000000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.00000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 58.00%">0.55555556</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> int_rate </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 93.44%">0.927147658</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 96.23%">0.95812505</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 29.50%">0.25396825</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> installment </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 98.65%">0.985032198</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 95.26%">0.94728104</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 46.00%">0.42857143</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> grade </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 59.94%">0.554920199</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 63.77%">0.59748381</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 13.00%">-0.07936508</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sub_grade </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 93.53%">0.928062675</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 94.92%">0.94351644</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 47.50%">-0.44444444</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> emp_length_known </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.000000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.00000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">-0.04761905</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> emp_length </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.000000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 15.42%">0.06026947</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 22.00%">0.17460317</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> home_mortgager </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.000000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.00000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 37.00%">-0.33333333</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> home_owner </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.000000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 11.84%">0.02048012</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 44.50%">-0.41269841</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> annual_inc </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 17.89%">0.087683831</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 34.91%">0.27672475</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 83.50%">-0.82539683</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> verification_status </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.000000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.00000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 26.50%">-0.22222222</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> loan_status </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.000000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.00000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 55.00%">-0.52380952</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> addr_state_lat </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.000000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">0.00000000</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 55.00%">0.52380952</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> addr_state_lon </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.69%">0.007665354</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 24.12%">0.15688312</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 29.50%">-0.25396825</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> dti </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.69%">0.007665354</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 12.87%">0.03189550</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 100.00%">1.00000000</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> open_acc </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 62.27%">0.580783864</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 56.71%">0.51904420</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 37.00%">0.33333333</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> pub_rec </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.92%">0.010196672</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 25.30%">0.16999241</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 25.00%">0.20634921</span> </td>
+  </tr>
+</tbody>
+</table></div><!--/html_preserve-->
+
+Finally, if we were to use the estimated classification models on the test data, we would get the following profit curves (see the raw .Rmd file to select the business profit parameters). 
+
+The profit curve using the small classification tree: 
+
+
+```
+## Error in loadNamespace(name): there is no package called 'webshot'
+```
+
+The profit curve using the large classification tree: 
+
+
+```
+## Error in loadNamespace(name): there is no package called 'webshot'
+```
+
+The profit curve using the logistic regression classifier: 
+
+
+```
+## Error in loadNamespace(name): there is no package called 'webshot'
+```
+
+These are the maximum total profit achieved in the test data using the three classifiers (without any segment specific analysis so far).
+
+<!--html_preserve--><div class="formattable_container"><table class="table table-condensed">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> Percentile </th>
+   <th style="text-align:right;"> Profit </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> Small Tree </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 32.50%">98.8</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 100.00%">41150</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Large Tree </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 100.00%">100.0</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">40850</span> </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Logistic Regression </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 10.00%">98.4</span> </td>
+   <td style="text-align:right;"> <span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #EEEEEE; width: 62.50%">41025</span> </td>
+  </tr>
+</tbody>
+</table></div><!--/html_preserve-->
 
