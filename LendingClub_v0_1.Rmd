@@ -100,7 +100,7 @@ In order to begin analysing the data (generating descriptive statistics, etc.), 
 - Step 1: analysing correlations and identifying variables which are linear combinations of one another
 
 ```{r setupfactor, echo=TRUE, tidy=TRUE}
-# Please ENTER then original raw attributes to use. 
+# Please ENTER the original raw attributes to use. 
 # Please use numbers, not column names, e.g. c(1:5, 7, 8) uses columns 1,2,3,4,5,7,8
 factor_attributes_used = c(3:23)
 
@@ -131,6 +131,7 @@ ProjectDataFactor <- ProjectData <- data.matrix(ProjectDataFactor)
 ## Check Correlations
 
 Analysing correlations and identifying variables which are linear combinations of one another. This is the correlation matrix of all the different attributes/variables for the unique customers we have. 
+We can see from the table below that loan_amnt and installment are highly correlated, suggesting a linear relationship between both exists. Other than that, no other linear combinations were identified in the data.  
 
 
 ```{r}

@@ -213,6 +213,14 @@ rownames(Rotated_Factors_thres)<- rownames(Rotated_Factors)
 iprint.df(Rotated_Factors_thres, scale=TRUE)
 ```
 
+The first `r factors_selected` factors that we have selected can be named and interpreted as follows:  
+-  Comp1: Lending Club's rating - how Lending Club has rated the operation  
+-  Comp2: scale of the operation -
+
+
++ Remove active loans (i.e. loans that haven’t had the opportunity to default or not because they are still ongoing) and loans with a blank status
+    + Remove columns deemed unnecessary to analyze as they wouldn’t provide useful informatio
+
 - Step 2: visualization (?)
 - Step 3: create factors and decide which ones to keep based on a eigenvalue analysis
 - Step 4: interpret the factors
